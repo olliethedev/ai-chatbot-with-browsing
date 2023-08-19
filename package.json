@@ -11,7 +11,8 @@
     "preview": "next build && next start",
     "type-check": "tsc --noEmit",
     "format:write": "prettier --write \"{app,lib,components}/**/*.{ts,tsx,mdx}\" --cache",
-    "format:check": "prettier --check \"{app,lib,components}**/*.{ts,tsx,mdx}\" --cache"
+    "format:check": "prettier --check \"{app,lib,components}**/*.{ts,tsx,mdx}\" --cache",
+    "pnpm-dev": "pnpm dev"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.0.4",
@@ -27,9 +28,12 @@
     "@vercel/kv": "^0.2.1",
     "@vercel/og": "^0.5.7",
     "ai": "^2.1.6",
+    "axios": "^1.4.0",
+    "cheerio": "1.0.0-rc.12",
     "class-variance-authority": "^0.4.0",
     "clsx": "^1.2.1",
     "focus-trap-react": "^10.1.1",
+    "langchain": "^0.0.129",
     "nanoid": "^4.0.2",
     "next": "13.4.7-canary.1",
     "next-auth": "0.0.0-manual.83c4ebd1",
