@@ -1,6 +1,7 @@
 import { kv } from '@vercel/kv'
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { Message as VercelChatMessage, StreamingTextResponse, LangChainStream } from "ai";
+import { DynamicTool } from "langchain/tools";
 import { initializeAgentExecutorWithOptions } from "langchain/agents";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { Calculator } from "langchain/tools/calculator";
@@ -10,13 +11,15 @@ import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 
 import { AIMessage, ChainValues, ChatMessage, HumanMessage } from "langchain/schema";
 import { BufferMemory, ChatMessageHistory } from "langchain/memory";
-import { Configuration, OpenAIApi } from 'openai-edge'
 
 import { auth } from '@/auth'
 import { nanoid } from '@/lib/utils'
 import { BaseCallbackHandler } from "langchain/callbacks";
-import { Serialized } from "langchain/load/serializable";
 import { AgentAction } from "langchain/schema";
+import { getVectorStoreWithTypesense, saveDocsToTypesense } from '@/lib/search';
+import {
+  RecursiveCharacterTextSplitter,
+} from "langchain/text_splitter";
 
 const convertVercelMessageToLangChainMessage = (message: VercelChatMessage) => {
   if (message.role === "user") {
@@ -28,7 +31,7 @@ const convertVercelMessageToLangChainMessage = (message: VercelChatMessage) => {
   }
 };
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 
 
 export async function POST(req: NextRequest) {
@@ -71,7 +74,7 @@ export async function POST(req: NextRequest) {
       outputKey: "output",
     }),
     agentArgs: {
-      prefix: 'You are a software developer called Ollie the dev. If you dont know something, you can search internet and read webpages.'
+      prefix: 'You are a software developer called Ollie the dev. If you dont know something, you can search internet, read webpages, memorize info and recall things from memory'
     },
   });
 
@@ -84,25 +87,27 @@ export async function POST(req: NextRequest) {
   },
     {
       callbacks: [
-        getCustomAgentHandler(stream,
-          async (text: string) => {
-            tempTokens += text;
-            return handlers.handleLLMNewToken(text);
-          },
-          async (text: string) => {
-            tempTokens += text;
-            return handlers.handleLLMNewToken(text);
-          },
-          async (result: ChainValues) => {
-            console.log("handleChainEnd")
-            const tokens = result.llmOutput?.tokenUsage?.totalTokens ?? 0;
-            const title = body.messages[0].content.substring(0, 100);
-            const id = body.id ?? nanoid();
-            console.log(JSON.stringify(result, null, 2));
-            await saveToHistory(`${ title } (${ tokens } tokens)`, id, userId, messages, tempTokens);
-            return handlers.handleChainEnd()
-          },
-          handlers.handleLLMError
+        getCustomAgentHandler(
+          {
+            handleLLMNewToken: async (text: string) => {
+              tempTokens += text;
+              return handlers.handleLLMNewToken(text);
+            },
+            onStreamAdd: async (text: string) => {
+              tempTokens += text;
+              return handlers.handleLLMNewToken(text);
+            },
+            handleChainEnd: async (result: ChainValues) => {
+              console.log("handleChainEnd")
+              const tokens = result.llmOutput?.tokenUsage?.totalTokens ?? 0;
+              const title = body.messages[0].content.substring(0, 100);
+              const id = body.id ?? nanoid();
+              console.log(JSON.stringify(result, null, 2));
+              await saveToHistory(`${ title } (${ tokens } tokens)`, id, userId, messages, tempTokens);
+              return handlers.handleChainEnd()
+            },
+            handleLLMError: handlers.handleLLMError,
+          }
         )
       ]
     }
@@ -113,11 +118,18 @@ export async function POST(req: NextRequest) {
 }
 
 const getCustomAgentHandler = (
-  stream: ReadableStream<Uint8Array>,
-  handleLLMNewToken: (text: string) => Promise<void>,
-  onStreamAdd: (text: string) => void,
-  handleChainEnd: (outputs: ChainValues) => Promise<void>,
-  handleLLMError: (e: any) => Promise<void>,
+  {
+    handleLLMNewToken,
+    onStreamAdd,
+    handleChainEnd,
+    handleLLMError,
+  }:
+    {
+      handleLLMNewToken: (text: string) => Promise<void>,
+      onStreamAdd: (text: string) => void,
+      handleChainEnd: (outputs: ChainValues) => Promise<void>,
+      handleLLMError: (e: any) => Promise<void>,
+    }
 ) => {
   return BaseCallbackHandler.fromMethods({
     handleAgentAction(action: AgentAction) {
@@ -180,5 +192,57 @@ const getTools = () => {
   });
   const calculator = new Calculator();
 
-  return [googleSearch, webBrowser, calculator];
+  return [googleSearch, webBrowser, calculator, getSearchTool(), getMemoizerTool()];
 }
+
+const getSearchTool = () => {
+  return new DynamicTool({
+    name: "Memory_Search",
+    description:
+      "Call this tool to search your memory, input is the search query string",
+    func: searchDocuments as any,
+  });
+}
+
+const getMemoizerTool = () => {
+  return new DynamicTool({
+    name: "Save_To_Memory",
+    description:
+      "Call this tool to save to memory, input is the data to save as a string",
+    func: saveDocuments as any,
+  });
+}
+
+const searchDocuments = async (input: string) => {
+  try {
+    const vectorStore = await getVectorStoreWithTypesense();
+    const results = await vectorStore.similaritySearch(input);
+    console.log(JSON.stringify(results, null, 2));
+    return results
+    .map((result) => result.pageContent)
+    .map((result) => JSON.stringify(result, null, 2)).join("\n");
+  } catch (e) {
+    console.trace(e);
+    return "Error searching memory";
+  }
+}
+
+const saveDocuments = async (input: string) => {
+  try {
+    const splitter = new RecursiveCharacterTextSplitter({
+      chunkSize: 4000,
+      chunkOverlap: 200,
+    });
+
+    const output = await splitter.createDocuments([input]);
+    console.log(JSON.stringify(output, null, 2));
+    await saveDocsToTypesense(output);
+
+    return "Saved to memory successfully";
+  } catch (e) {
+    console.trace(e);
+    return "Error saving to memory";
+  }
+}
+
+

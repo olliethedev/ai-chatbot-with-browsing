@@ -19,6 +19,15 @@ export interface ChatMessageProps {
   message: Message
 }
 
+type ToolData = {
+  tool: string
+  toolInput: {
+    input: string
+  }
+  log: string
+  messageLog?: any[]
+}
+
 export function ChatMessage({ message, ...props }: ChatMessageProps) {
   return (
     <div
@@ -35,7 +44,7 @@ export function ChatMessage({ message, ...props }: ChatMessageProps) {
       >
         {message.role === 'user' ? <IconUser /> : <IconOpenAI />}
       </div>
-      <div className="flex-1 px-1 ml-4 space-y-2 overflow-hidden">
+      <div className="ml-4 flex-1 space-y-2 overflow-hidden px-1">
         <MemoizedReactMarkdown
           className="prose break-words dark:prose-invert prose-p:leading-relaxed prose-pre:p-0"
           remarkPlugins={[remarkGfm, remarkMath]}
@@ -47,7 +56,7 @@ export function ChatMessage({ message, ...props }: ChatMessageProps) {
               if (children.length) {
                 if (children[0] == '▍') {
                   return (
-                    <span className="mt-1 cursor-default animate-pulse">▍</span>
+                    <span className="mt-1 animate-pulse cursor-default">▍</span>
                   )
                 }
 
@@ -61,29 +70,10 @@ export function ChatMessage({ message, ...props }: ChatMessageProps) {
               
 
               if (matchAIStart) {
-                const toolStartData = JSON.parse(children[0] as string) as {
-                tool: string
-                toolInput: {
-                  input: string
-                }
-                log: string
-                messageLog?: any[]
-              }
+                const toolStartData = JSON.parse(children[0] as string) as ToolData
               delete toolStartData.messageLog
                 return (
-                  <Accordion.Root type="single" collapsible>
-                    <Accordion.Item value="item-1">
-                      <Accordion.Trigger className="flex items-center justify-between w-full px-4 py-2 text-sm font-medium text-left text-white bg-gray-900 rounded-lg hover:bg-gray-700 focus:outline-none focus-visible:ring focus-visible:ring-gray-500 focus-visible:ring-opacity-75">
-                        <span>AI Tool Started</span>
-                        <IconChevronUpDown className="opacity-50" />
-                      </Accordion.Trigger>
-                      <Accordion.Content className="px-4 py-2 text-sm text-gray-500">
-                        <div className="prose break-words dark:prose-invert prose-p:leading-relaxed prose-pre:p-0">
-                          {JSON.stringify(toolStartData, null, 2)}
-                        </div>
-                      </Accordion.Content>
-                    </Accordion.Item>
-                  </Accordion.Root>
+                  <AiToolAccordion toolData={toolStartData} />
                 )
               }
 
@@ -91,21 +81,9 @@ export function ChatMessage({ message, ...props }: ChatMessageProps) {
 
               if (matchAIEnd) {
 
-              const toolEndData = JSON.parse(children[0] as string) as any[]
+              const toolEndData = JSON.parse(children[0] as string) as string
                 return (
-                  <Accordion.Root type="single" collapsible>
-                    <Accordion.Item value="item-1">
-                      <Accordion.Trigger className="flex items-center justify-between w-full px-4 py-2 text-sm font-medium text-left text-white bg-gray-900 rounded-lg hover:bg-gray-700 focus:outline-none focus-visible:ring focus-visible:ring-gray-500 focus-visible:ring-opacity-75">
-                        <span>AI Tool Result</span>
-                        <IconChevronUpDown className="opacity-50" />
-                      </Accordion.Trigger>
-                      <Accordion.Content className="px-4 py-2 text-sm text-gray-500">
-                        <div className="prose break-words dark:prose-invert prose-p:leading-relaxed prose-pre:p-0">
-                          {JSON.stringify(toolEndData, null, 2)}
-                        </div>
-                      </Accordion.Content>
-                    </Accordion.Item>
-                  </Accordion.Root>
+                 <AiToolAccordion toolData={toolEndData} />
                 )
               }
 
@@ -135,5 +113,31 @@ export function ChatMessage({ message, ...props }: ChatMessageProps) {
         <ChatMessageActions message={message} />
       </div>
     </div>
+  )
+}
+
+const AiToolAccordion = ({toolData}:{toolData: ToolData | string}) => {
+  console.log(toolData)
+  return (
+    <Accordion.Root type="single" collapsible>
+    <Accordion.Item value="item-1">
+      <Accordion.Trigger className="flex w-full items-center justify-between rounded-lg bg-secondary px-4 py-2 text-left text-sm font-medium text-white hover:bg-secondary/80">
+        {/* Prints tool title or whole string */}
+        
+        {typeof toolData === 'string' ? "Tool result" : `Running tool: ${toolData.tool}`}
+
+        <IconChevronUpDown className="opacity-50" />
+      </Accordion.Trigger>
+      <Accordion.Content className="overflow-x-auto px-4 py-2 text-sm text-gray-500">
+        <div className="prose break-words dark:prose-invert prose-p:leading-relaxed prose-pre:p-0">
+          {/* // if string is object or array, print it, else print whole string. makes json array pretty and readable */}
+
+          {typeof toolData === 'string' ? toolData : JSON.stringify(toolData, null, 2)}
+         
+
+        </div>
+      </Accordion.Content>
+    </Accordion.Item>
+  </Accordion.Root>
   )
 }
