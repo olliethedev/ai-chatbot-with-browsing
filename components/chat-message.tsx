@@ -4,8 +4,12 @@
 import { Message } from 'ai'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
+import {
+  IconChevronUpDown
+} from '@/components/ui/icons'
 
 import { cn } from '@/lib/utils'
+import * as Accordion from '@radix-ui/react-accordion'
 import { CodeBlock } from '@/components/ui/codeblock'
 import { MemoizedReactMarkdown } from '@/components/markdown'
 import { IconOpenAI, IconUser } from '@/components/ui/icons'
@@ -48,6 +52,61 @@ export function ChatMessage({ message, ...props }: ChatMessageProps) {
                 }
 
                 children[0] = (children[0] as string).replace('`▍`', '▍')
+              }
+              // if language is language-ai-tool-start or language-ai-tool-end, use @radix-ui/react-accordion, else use codeblock
+
+              const matchAIStart = /language-ai-tool-start/.exec(
+                className || ''
+              )
+              
+
+              if (matchAIStart) {
+                const toolStartData = JSON.parse(children[0] as string) as {
+                tool: string
+                toolInput: {
+                  input: string
+                }
+                log: string
+                messageLog?: any[]
+              }
+              delete toolStartData.messageLog
+                return (
+                  <Accordion.Root type="single" collapsible>
+                    <Accordion.Item value="item-1">
+                      <Accordion.Trigger className="flex items-center justify-between w-full px-4 py-2 text-sm font-medium text-left text-white bg-gray-900 rounded-lg hover:bg-gray-700 focus:outline-none focus-visible:ring focus-visible:ring-gray-500 focus-visible:ring-opacity-75">
+                        <span>AI Tool Started</span>
+                        <IconChevronUpDown className="opacity-50" />
+                      </Accordion.Trigger>
+                      <Accordion.Content className="px-4 py-2 text-sm text-gray-500">
+                        <div className="prose break-words dark:prose-invert prose-p:leading-relaxed prose-pre:p-0">
+                          {JSON.stringify(toolStartData, null, 2)}
+                        </div>
+                      </Accordion.Content>
+                    </Accordion.Item>
+                  </Accordion.Root>
+                )
+              }
+
+              const matchAIEnd = /language-ai-tool-end/.exec(className || '')
+
+              if (matchAIEnd) {
+
+              const toolEndData = JSON.parse(children[0] as string) as any[]
+                return (
+                  <Accordion.Root type="single" collapsible>
+                    <Accordion.Item value="item-1">
+                      <Accordion.Trigger className="flex items-center justify-between w-full px-4 py-2 text-sm font-medium text-left text-white bg-gray-900 rounded-lg hover:bg-gray-700 focus:outline-none focus-visible:ring focus-visible:ring-gray-500 focus-visible:ring-opacity-75">
+                        <span>AI Tool Result</span>
+                        <IconChevronUpDown className="opacity-50" />
+                      </Accordion.Trigger>
+                      <Accordion.Content className="px-4 py-2 text-sm text-gray-500">
+                        <div className="prose break-words dark:prose-invert prose-p:leading-relaxed prose-pre:p-0">
+                          {JSON.stringify(toolEndData, null, 2)}
+                        </div>
+                      </Accordion.Content>
+                    </Accordion.Item>
+                  </Accordion.Root>
+                )
               }
 
               const match = /language-(\w+)/.exec(className || '')

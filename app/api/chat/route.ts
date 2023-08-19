@@ -123,7 +123,7 @@ const getCustomAgentHandler = (
     handleAgentAction(action: AgentAction) {
       console.log({ agentAction: action })
       onStreamAdd(
-        `\n\`\`\`json\n${ JSON.stringify(action) }\n\`\`\`\`\n`
+        `\n\`\`\`ai-tool-start\n${ JSON.stringify(action) }\n\`\`\`\`\n`
       )
     },
     handleLLMNewToken,
@@ -132,7 +132,7 @@ const getCustomAgentHandler = (
     handleToolEnd(output) {
       console.log({ toolEnd: output })
       onStreamAdd(
-        `\n\`\`\`json\n${ JSON.stringify(output) }\n\`\`\`\`\n`
+        `\n\`\`\`ai-tool-end\n${ JSON.stringify(output) }\n\`\`\`\`\n`
       )
     },
   });
