@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from 'clsx'
 import { customAlphabet } from 'nanoid'
 import { twMerge } from 'tailwind-merge'
+import { kv } from '@vercel/kv'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -39,5 +40,30 @@ export function formatDate(input: string | number | Date): string {
     month: 'long',
     day: 'numeric',
     year: 'numeric'
+  })
+}
+
+export const saveToHistory = async (title: string, id: string, userId: string, messages: any[], completion: string) => {
+
+  const createdAt = Date.now()
+  const path = `/chat/${ id }`
+  const payload = {
+    id,
+    title,
+    userId,
+    createdAt,
+    path,
+    messages: [
+      ...messages,
+      {
+        content: completion,
+        role: 'assistant'
+      }
+    ]
+  }
+  await kv.hmset(`chat:${ id }`, payload)
+  await kv.zadd(`user:chat:${ userId }`, {
+    score: createdAt,
+    member: `chat:${ id }`
   })
 }
