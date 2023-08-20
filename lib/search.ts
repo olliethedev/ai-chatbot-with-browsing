@@ -20,6 +20,7 @@ export const getTypesenseClient = () =>{
         apiKey: (process.env as any).TYPESENSE_API_KEY,
         numRetries: 0,
         connectionTimeoutSeconds: 200,
+        logLevel: "debug",
       });
       
 }
@@ -37,7 +38,7 @@ export const getTypesenseVectorStoreConfig = () =>{
           // "text" is the default name for the text column in Typesense but you can change it to whatever you want
           pageContent: "text",
           // Names of the columns that you will save in your typesense schema and need to be retrieved as metadata when searching
-          metadataColumnNames: ["source", "loc"],
+          metadataColumnNames: ["source", "loc", "userId"],
         },
         
       } satisfies TypesenseConfig;

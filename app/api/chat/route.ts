@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     .map(convertVercelMessageToLangChainMessage);
   const currentMessageContent = messages[messages.length - 1].content;
 
-  const tools = getTools();
+  const tools = getTools(userId);
   const chat = new ChatOpenAI({
     modelName: "gpt-4",
     temperature: 0.4,
@@ -175,7 +175,7 @@ const saveToHistory = async (title: string, id: string, userId: string, messages
   })
 }
 
-const getTools = () => {
+const getTools = (userId: string) => {
   const googleSearch = new GoogleCustomSearch({
     apiKey: process.env.GOOGLE_API_KEY,
     googleCSEId: process.env.GOOGLE_CSE_ID,
@@ -192,49 +192,67 @@ const getTools = () => {
   });
   const calculator = new Calculator();
 
-  return [googleSearch, webBrowser, calculator, getSearchTool(), getMemoizerTool()];
+  return [googleSearch, webBrowser, calculator, getSearchTool(userId), getMemoizerTool(userId)];
 }
 
-const getSearchTool = () => {
+const getSearchTool = (userId: string) => {
   return new DynamicTool({
     name: "Memory_Search",
     description:
       "Call this tool to search your memory, input is the search query string",
-    func: searchDocuments as any,
+    func: (input: string) => searchDocuments(userId, input) as any,
   });
 }
 
-const getMemoizerTool = () => {
+const getMemoizerTool = (userId: string) => {
   return new DynamicTool({
     name: "Save_To_Memory",
     description:
       "Call this tool to save to memory, input is the data to save as a string",
-    func: saveDocuments as any,
+    func: (input: string) => saveDocuments(userId, input) as any,
   });
 }
 
-const searchDocuments = async (input: string) => {
+const searchDocuments = async (userId: string, input: string) => {
   try {
     const vectorStore = await getVectorStoreWithTypesense();
-    const results = await vectorStore.similaritySearch(input);
+    console.log({
+      userId,
+      input
+    })
+    const results = await vectorStore.similaritySearch(input, undefined, {
+      filter_by: `userId:=\`${ userId }\``
+    });
     console.log(JSON.stringify(results, null, 2));
     return results
-    .map((result) => result.pageContent)
-    .map((result) => JSON.stringify(result, null, 2)).join("\n");
+      .map((result) => result.pageContent)
+      .map((result) => JSON.stringify(result, null, 2)).join("\n");
   } catch (e) {
     console.trace(e);
     return "Error searching memory";
   }
 }
 
-const saveDocuments = async (input: string) => {
+const saveDocuments = async (userId: string, input: string) => {
   try {
     const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: 4000,
       chunkOverlap: 200,
     });
 
+    console.log({
+      userId,
+      input
+    })
+
     const output = await splitter.createDocuments([input]);
+    output.map((doc) => {
+      doc.metadata = {
+        ...doc.metadata,
+        userId: userId.toString()
+      }
+    })
+
     console.log(JSON.stringify(output, null, 2));
     await saveDocsToTypesense(output);
 
