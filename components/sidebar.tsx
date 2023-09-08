@@ -11,12 +11,15 @@ import {
   SheetTrigger
 } from '@/components/ui/sheet'
 import { IconSidebar } from '@/components/ui/icons'
+import { cn } from '@/lib/utils'
 
 export interface SidebarProps {
   children?: React.ReactNode
+  className?: string
+  title: string
 }
 
-export function Sidebar({ children }: SidebarProps) {
+export function Sidebar({ children, className, title }: SidebarProps) {
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -25,9 +28,9 @@ export function Sidebar({ children }: SidebarProps) {
           <span className="sr-only">Toggle Sidebar</span>
         </Button>
       </SheetTrigger>
-      <SheetContent className="inset-y-0 flex h-auto w-[300px] flex-col p-0">
+      <SheetContent className={cn("inset-y-0 flex h-auto w-[300px] flex-col p-0",className)}>
         <SheetHeader className="p-4">
-          <SheetTitle className="text-sm">Chat History</SheetTitle>
+          <SheetTitle className="text-sm">{title}</SheetTitle>
         </SheetHeader>
         {children}
       </SheetContent>

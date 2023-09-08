@@ -1,6 +1,6 @@
 import { getChats, removeChat, shareChat } from '@/app/actions'
 import { SidebarActions } from '@/components/sidebar-actions'
-import { SidebarItem } from '@/components/sidebar-item'
+import { SidebarChatItem } from '@/components/sidebar-item'
 
 export interface SidebarListProps {
   userId?: string
@@ -16,13 +16,13 @@ export async function SidebarList({ userId }: SidebarListProps) {
           {chats.map(
             chat =>
               chat && (
-                <SidebarItem key={chat?.id} chat={chat}>
+                <SidebarChatItem key={chat?.id} chat={chat}>
                   <SidebarActions
                     chat={chat}
                     removeChat={removeChat}
                     shareChat={shareChat}
                   />
-                </SidebarItem>
+                </SidebarChatItem>
               )
           )}
         </div>

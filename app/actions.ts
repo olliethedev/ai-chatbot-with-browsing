@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { kv } from '@vercel/kv'
 
 import { auth } from '@/auth'
-import { type Chat } from '@/lib/types'
+import { Prompt, type Chat } from '@/lib/types'
 
 export async function getChats(userId?: string | null) {
   if (!userId) {
@@ -25,6 +25,29 @@ export async function getChats(userId?: string | null) {
     const results = await pipeline.exec()
 
     return results as Chat[]
+  } catch (error) {
+    return []
+  }
+}
+
+export async function getPrompts(userId?: string | null){
+  if (!userId) {
+    return []
+  }
+
+  try {
+    const pipeline = kv.pipeline()
+    const prompts: string[] = await kv.zrange(`user:prompt:${userId}`, 0, -1, {
+      rev: true
+    })
+
+    for (const prompt of prompts) {
+      pipeline.hgetall(prompt)
+    }
+
+    const results = await pipeline.exec()
+
+    return results as Prompt[]
   } catch (error) {
     return []
   }
@@ -62,6 +85,31 @@ export async function removeChat({ id, path }: { id: string; path: string }) {
 
   revalidatePath('/')
   return revalidatePath(path)
+}
+
+export const saveChats = async (title: string, id: string, userId: string, messages: any[], completion: string) => {
+
+  const createdAt = Date.now()
+  const path = `/chat/${ id }`
+  const payload = {
+    id,
+    title,
+    userId,
+    createdAt,
+    path,
+    messages: [
+      ...messages,
+      {
+        content: completion,
+        role: 'assistant'
+      }
+    ]
+  }
+  await kv.hmset(`chat:${ id }`, payload)
+  await kv.zadd(`user:chat:${ userId }`, {
+    score: createdAt,
+    member: `chat:${ id }`
+  })
 }
 
 export async function clearChats() {
@@ -117,4 +165,19 @@ export async function shareChat(chat: Chat) {
   await kv.hmset(`chat:${chat.id}`, payload)
 
   return payload
+}
+
+export async function savePrompt(id: string, userId: string, text: string[]){
+  const createdAt = Date.now()
+  const payload = {
+    id,
+    text,
+    userId,
+    createdAt
+  }
+  await kv.hmset(`prompt:${ id }`, payload)
+  await kv.zadd(`user:prompt:${ userId }`, {
+    score: createdAt,
+    member: `prompt:${ id }`
+  })
 }

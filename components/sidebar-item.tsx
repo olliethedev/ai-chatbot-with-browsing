@@ -13,12 +13,12 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip'
 
-interface SidebarItemProps {
+interface SidebarChatItemProps {
   chat: Chat
   children: React.ReactNode
 }
 
-export function SidebarItem({ chat, children }: SidebarItemProps) {
+export function SidebarChatItem({ chat, children }: SidebarChatItemProps) {
   const pathname = usePathname()
   const isActive = pathname === chat.path
 

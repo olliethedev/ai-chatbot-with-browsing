@@ -43,27 +43,4 @@ export function formatDate(input: string | number | Date): string {
   })
 }
 
-export const saveToHistory = async (title: string, id: string, userId: string, messages: any[], completion: string) => {
 
-  const createdAt = Date.now()
-  const path = `/chat/${ id }`
-  const payload = {
-    id,
-    title,
-    userId,
-    createdAt,
-    path,
-    messages: [
-      ...messages,
-      {
-        content: completion,
-        role: 'assistant'
-      }
-    ]
-  }
-  await kv.hmset(`chat:${ id }`, payload)
-  await kv.zadd(`user:chat:${ userId }`, {
-    score: createdAt,
-    member: `chat:${ id }`
-  })
-}

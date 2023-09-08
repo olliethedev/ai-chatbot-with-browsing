@@ -1,5 +1,5 @@
 import { getTools } from "@/lib/tools";
-import { nanoid, saveToHistory } from '@/lib/utils'
+import { nanoid } from '@/lib/utils'
 import { BufferMemory, ChatMessageHistory } from "langchain/memory";
 import { initializeAgentExecutorWithOptions } from "langchain/agents";
 import { ChatOpenAI } from "langchain/chat_models/openai";
@@ -9,6 +9,7 @@ import { Message as VercelChatMessage, LangChainStream } from "ai";
 
 import { BaseCallbackHandler } from "langchain/callbacks";
 import { AgentAction } from "langchain/schema";
+import { saveChats } from "@/app/actions";
 
 const chat = new ChatOpenAI({
     modelName: "gpt-4",
@@ -69,7 +70,7 @@ export const getAgentExecutorStream = async ({
                             const tokens = result.llmOutput?.tokenUsage?.totalTokens ?? 0;
                             const title = messages[0].content.substring(0, 100);
                             console.log(JSON.stringify(result, null, 2));
-                            await saveToHistory(`${ title } (${ tokens } tokens)`, id ?? nanoid(), userId, messages, tempTokens);
+                            await saveChats(`${ title } (${ tokens } tokens)`, id ?? nanoid(), userId, messages, tempTokens);
                             return handlers.handleChainEnd()
                         },
                         handleLLMError: handlers.handleLLMError,
