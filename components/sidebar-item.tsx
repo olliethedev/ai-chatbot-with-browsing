@@ -5,44 +5,45 @@ import { usePathname } from 'next/navigation'
 
 import { type Chat } from '@/lib/types'
 import { cn } from '@/lib/utils'
-import { buttonVariants } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { IconMessage, IconUsers } from '@/components/ui/icons'
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger
 } from '@/components/ui/tooltip'
+import { useRouter } from 'next/navigation'
 
 interface SidebarChatItemProps {
-  chat: Chat
+  id?: string
+  path?: string
+  sharePath?: string
+  onClick?: () => void
+  title: string
   children: React.ReactNode
 }
 
-export function SidebarChatItem({ chat, children }: SidebarChatItemProps) {
+export function SidebarChatItem({ id, path, title, onClick, children }: SidebarChatItemProps) {
   const pathname = usePathname()
-  const isActive = pathname === chat.path
+  const isActive = pathname === path
 
-  if (!chat?.id) return null
+  const router = useRouter()
+
+  if (!id) return null
 
   return (
     <div className="relative">
-      <div className="absolute left-2 top-1 flex h-6 w-6 items-center justify-center">
-        {chat.sharePath ? (
-          <Tooltip delayDuration={1000}>
-            <TooltipTrigger
-              tabIndex={-1}
-              className="focus:bg-muted focus:ring-1 focus:ring-ring"
-            >
-              <IconUsers className="mr-2" />
-            </TooltipTrigger>
-            <TooltipContent>This is a shared chat.</TooltipContent>
-          </Tooltip>
-        ) : (
-          <IconMessage className="mr-2" />
-        )}
-      </div>
-      <Link
-        href={chat.path}
+      
+      <Button
+        // href={path}
+        onClick={() => {
+          if (path) {
+            router.push(path)
+          }else{
+            onClick && onClick()
+          }
+        }}
+        variant={isActive ? 'ghost' : 'ghost'}
         className={cn(
           buttonVariants({ variant: 'ghost' }),
           'group w-full pl-8 pr-16',
@@ -51,11 +52,11 @@ export function SidebarChatItem({ chat, children }: SidebarChatItemProps) {
       >
         <div
           className="relative max-h-5 flex-1 select-none overflow-hidden text-ellipsis break-all"
-          title={chat.title}
+          title={title}
         >
-          <span className="whitespace-nowrap">{chat.title}</span>
+          <span className="whitespace-nowrap">{title}</span>
         </div>
-      </Link>
+      </Button>
       {isActive && <div className="absolute right-2 top-1">{children}</div>}
     </div>
   )

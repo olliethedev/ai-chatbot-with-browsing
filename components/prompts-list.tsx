@@ -1,13 +1,23 @@
-import { getChats, getPrompts, removeChat, shareChat } from '@/app/actions'
+"use client"
+import { getPrompts, removePrompt, shareChat } from '@/app/actions'
 import { SidebarActions } from '@/components/sidebar-actions'
 import { SidebarChatItem } from '@/components/sidebar-item'
+import { Prompt } from '@/lib/types'
+import { useContext } from 'react'
+import { InputContext, InputContextType } from './context/input'
+// import { InputContext, InputContextType } from './context/input';
+// import { useContext } from 'react';
 
 export interface PromptsListProps {
   userId?: string
+  prompts?: Prompt[]
 }
 
-export async function PromptsList({ userId }: PromptsListProps) {
-  const prompts = await getPrompts(userId)
+export function PromptsList({ userId, prompts }: PromptsListProps) {
+  const { setInput : setInputState, } = useContext(
+    InputContext
+  ) as InputContextType;
+  
 
   return (
     <div className="flex-1 overflow-auto">
@@ -16,14 +26,19 @@ export async function PromptsList({ userId }: PromptsListProps) {
           {prompts.map(
             prompt =>
               prompt && (
-                <div key={prompt?.id}/>
-                // <SidebarChatItem key={prompt?.id} chat={prompt}>
-                //   {/* <SidebarActions
-                //     chat={prompt}
-                //     removeChat={removeChat}
-                //     shareChat={shareChat}
-                //   /> */}
-                // </SidebarChatItem>
+                <SidebarChatItem key={prompt?.id}
+                  id={prompt?.id}
+                  title={prompt.text.join(' ')}
+                  onClick={()=>{
+                    setInputState(prompt.text.join(' '))
+                  }}
+                >
+                  <SidebarActions
+                    id = {prompt.id}
+                    path = {prompt.path}
+                    removeItem={removePrompt}
+                  />
+                </SidebarChatItem>
               )
           )}
         </div>

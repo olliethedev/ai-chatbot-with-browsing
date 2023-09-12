@@ -12,8 +12,9 @@ import { cn } from '@/lib/utils'
 import * as Accordion from '@radix-ui/react-accordion'
 import { CodeBlock } from '@/components/ui/codeblock'
 import { MemoizedReactMarkdown } from '@/components/markdown'
-import { IconOpenAI, IconUser } from '@/components/ui/icons'
+import { IconOpenAI, IconUser, IconSave } from '@/components/ui/icons'
 import { ChatMessageActions } from '@/components/chat-message-actions'
+import { Button } from './ui/button'
 
 export interface ChatMessageProps {
   message: Message
@@ -112,6 +113,7 @@ export function ChatMessage({ message, ...props }: ChatMessageProps) {
         </MemoizedReactMarkdown>
         <ChatMessageActions message={message} />
       </div>
+      
     </div>
   )
 }

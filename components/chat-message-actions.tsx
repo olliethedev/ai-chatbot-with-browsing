@@ -3,9 +3,11 @@
 import { type Message } from 'ai'
 
 import { Button } from '@/components/ui/button'
-import { IconCheck, IconCopy } from '@/components/ui/icons'
+import { nanoid } from '@/lib/utils'
+import { IconCheck, IconCopy, IconSave } from '@/components/ui/icons'
 import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard'
 import { cn } from '@/lib/utils'
+import { savePrompt } from '@/app/actions'
 
 interface ChatMessageActionsProps extends React.ComponentProps<'div'> {
   message: Message
@@ -23,6 +25,14 @@ export function ChatMessageActions({
     copyToClipboard(message.content)
   }
 
+  const onSavePrompt = () => {
+    console.log('save prompt')
+    const call = async () => {
+      await savePrompt(nanoid(), [message.content])
+    }
+    call()
+  }
+
   return (
     <div
       className={cn(
@@ -35,6 +45,14 @@ export function ChatMessageActions({
         {isCopied ? <IconCheck /> : <IconCopy />}
         <span className="sr-only">Copy message</span>
       </Button>
+      <Button
+              variant="ghost" size="icon"
+              // disabled={isRemovePending}
+              onClick={onSavePrompt}
+            >
+              <IconSave />
+              <span className="sr-only">Save</span>
+            </Button>
     </div>
   )
 }

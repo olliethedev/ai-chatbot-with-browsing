@@ -87,6 +87,28 @@ export async function removeChat({ id, path }: { id: string; path: string }) {
   return revalidatePath(path)
 }
 
+export async function removePrompt({ id, path }: { id: string; path: string }) {
+  const session = await auth()
+
+  if (!session) {
+    return {
+      error: 'Unauthorized'
+    }
+  }
+
+  const uid = await kv.hget<string>(`prompt:${id}`, 'userId')
+
+  if (uid !== session?.user?.id) {
+    return {
+      error: 'Unauthorized'
+    }
+  }
+
+  await kv.del(`prompt:${id}`)
+  await kv.zrem(`user:prompt:${session.user.id}`, `prompt:${id}`)
+  return revalidatePath(path)
+}
+
 export const saveChats = async (title: string, id: string, userId: string, messages: any[], completion: string) => {
 
   const createdAt = Date.now()
@@ -167,7 +189,17 @@ export async function shareChat(chat: Chat) {
   return payload
 }
 
-export async function savePrompt(id: string, userId: string, text: string[]){
+export async function savePrompt(id: string, text: string[]){
+
+  const session = await auth()
+
+  if (!session?.user?.id) {
+    return {
+      error: 'Unauthorized'
+    }
+  }
+
+  const userId = session.user.id
   const createdAt = Date.now()
   const payload = {
     id,
@@ -180,4 +212,5 @@ export async function savePrompt(id: string, userId: string, text: string[]){
     score: createdAt,
     member: `prompt:${ id }`
   })
+  console.log("saved prompt")
 }

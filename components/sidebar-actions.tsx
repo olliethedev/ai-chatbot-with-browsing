@@ -40,49 +40,51 @@ import {
 } from '@/components/ui/tooltip'
 
 interface SidebarActionsProps {
-  chat: Chat
-  removeChat: (args: { id: string; path: string }) => ServerActionResult<void>
-  shareChat: (chat: Chat) => ServerActionResult<Chat>
+  id: string,
+  path: string,
+  removeItem: (args: { id: string; path: string }) => ServerActionResult<void>
+  // shareChat?: (chat: Chat) => ServerActionResult<Chat>
 }
 
 export function SidebarActions({
-  chat,
-  removeChat,
-  shareChat
+  id,
+  path,
+  removeItem,
+  // shareChat
 }: SidebarActionsProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
-  const [shareDialogOpen, setShareDialogOpen] = React.useState(false)
+  // const [shareDialogOpen, setShareDialogOpen] = React.useState(false)
   const [isRemovePending, startRemoveTransition] = React.useTransition()
-  const [isSharePending, startShareTransition] = React.useTransition()
+  // const [isSharePending, startShareTransition] = React.useTransition()
   const router = useRouter()
 
-  const copyShareLink = React.useCallback(async (chat: Chat) => {
-    if (!chat.sharePath) {
-      return toast.error('Could not copy share link to clipboard')
-    }
+  // const copyShareLink = React.useCallback(async (chat: Chat) => {
+  //   if (!chat.sharePath) {
+  //     return toast.error('Could not copy share link to clipboard')
+  //   }
 
-    const url = new URL(window.location.href)
-    url.pathname = chat.sharePath
-    navigator.clipboard.writeText(url.toString())
-    setShareDialogOpen(false)
-    toast.success('Share link copied to clipboard', {
-      style: {
-        borderRadius: '10px',
-        background: '#333',
-        color: '#fff',
-        fontSize: '14px'
-      },
-      iconTheme: {
-        primary: 'white',
-        secondary: 'black'
-      }
-    })
-  }, [])
+  //   const url = new URL(window.location.href)
+  //   url.pathname = chat.sharePath
+  //   navigator.clipboard.writeText(url.toString())
+  //   // setShareDialogOpen(false)
+  //   toast.success('Share link copied to clipboard', {
+  //     style: {
+  //       borderRadius: '10px',
+  //       background: '#333',
+  //       color: '#fff',
+  //       fontSize: '14px'
+  //     },
+  //     iconTheme: {
+  //       primary: 'white',
+  //       secondary: 'black'
+  //     }
+  //   })
+  // }, [])
 
   return (
     <>
       <div className="space-x-1">
-        <Tooltip>
+        {/* <Tooltip>
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
@@ -94,7 +96,7 @@ export function SidebarActions({
             </Button>
           </TooltipTrigger>
           <TooltipContent>Share chat</TooltipContent>
-        </Tooltip>
+        </Tooltip> */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -110,7 +112,7 @@ export function SidebarActions({
           <TooltipContent>Delete chat</TooltipContent>
         </Tooltip>
       </div>
-      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+      {/* <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Share link to chat</DialogTitle>
@@ -138,7 +140,7 @@ export function SidebarActions({
                 {chat.sharePath}
               </Link>
             )}
-            <Button
+            {shareChat&&<Button
               disabled={isSharePending}
               onClick={() => {
                 startShareTransition(() => {
@@ -171,10 +173,10 @@ export function SidebarActions({
               ) : (
                 <>Copy link</>
               )}
-            </Button>
+            </Button>}
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -194,9 +196,9 @@ export function SidebarActions({
                 event.preventDefault()
                 startRemoveTransition( () => {
                   const call = async () => {
-                    const result = await removeChat({
-                      id: chat.id,
-                      path: chat.path
+                    const result = await removeItem({
+                      id: id,
+                      path: path
                     })
   
                     if (result && 'error' in result) {

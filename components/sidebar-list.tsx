@@ -16,11 +16,16 @@ export async function SidebarList({ userId }: SidebarListProps) {
           {chats.map(
             chat =>
               chat && (
-                <SidebarChatItem key={chat?.id} chat={chat}>
+                <SidebarChatItem key={chat?.id}
+                  id={chat?.id}
+                  path={chat.path}
+                  title={chat.title}
+                  sharePath={chat.sharePath}
+                >
                   <SidebarActions
-                    chat={chat}
-                    removeChat={removeChat}
-                    shareChat={shareChat}
+                    id = {chat.id}
+                    path = {chat.path}
+                    removeItem={removeChat}
                   />
                 </SidebarChatItem>
               )

@@ -19,6 +19,7 @@ import { ClearHistory } from '@/components/clear-history'
 import { UserMenu } from '@/components/user-menu'
 import { LoginButton } from '@/components/login-button'
 import { PromptsList } from './prompts-list'
+import { PromptsListWrapper } from './prompts-list-wrapper'
 
 export async function Header() {
   const session = await auth()
@@ -78,7 +79,7 @@ export async function Header() {
         title="Saved Prompts">
             <React.Suspense fallback={<div className="flex-1 overflow-auto" />}>
               {/* @ts-ignore */}
-              <PromptsList userId={session?.user?.id} />
+              <PromptsListWrapper userId={session?.user?.id} />
             </React.Suspense>
           </Sidebar>
       </div>
