@@ -1,18 +1,10 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
-import { type Chat } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { Button, buttonVariants } from '@/components/ui/button'
-import { IconMessage, IconUsers } from '@/components/ui/icons'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger
-} from '@/components/ui/tooltip'
-import { useRouter } from 'next/navigation'
+
 
 interface SidebarChatItemProps {
   id?: string
@@ -24,10 +16,12 @@ interface SidebarChatItemProps {
 }
 
 export function SidebarChatItem({ id, path, title, onClick, children }: SidebarChatItemProps) {
+
+  const router = useRouter()
+
   const pathname = usePathname()
   const isActive = pathname === path
 
-  const router = useRouter()
 
   if (!id) return null
 

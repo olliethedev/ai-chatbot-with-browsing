@@ -1,6 +1,7 @@
 import { getChats, removeChat, shareChat } from '@/app/actions'
 import { SidebarActions } from '@/components/sidebar-actions'
 import { SidebarChatItem } from '@/components/sidebar-item'
+import { NewChatButton } from './ui/new-chat-button'
 
 export interface SidebarListProps {
   userId?: string
@@ -11,6 +12,7 @@ export async function SidebarList({ userId }: SidebarListProps) {
 
   return (
     <div className="flex-1 overflow-auto">
+      <NewChatButton/>
       {chats?.length ? (
         <div className="space-y-2 px-2">
           {chats.map(
